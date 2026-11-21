@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, nowIso, putBlob, uid, type Entry, type TranscriptionState } from '../db';
+import { db, getSettings, nowIso, putBlob, uid, type Entry, type TranscriptionState } from '../db';
 import { dayKey } from '../lib/dates';
 import { compressImage, formatSeconds, useRecorder, type Recording } from '../lib/media';
 import { canTranscribe, processPending, transcribe, TranscribeError } from '../lib/transcribe';
@@ -31,6 +31,12 @@ export default function Capture({ entry, initialText, onClose }: { entry?: Entry
   const fileInput = useRef<HTMLInputElement>(null);
   const rec = useRecorder();
   const saving = useRef(false);
+
+  // La grabadora solo aparece si hay transcripción configurada; si no, se dicta con el teclado.
+  const [voiceOn, setVoiceOn] = useState(false);
+  useEffect(() => {
+    void getSettings().then((s) => setVoiceOn(Boolean(s.transcribeKey)));
+  }, []);
 
   // Fotos ya usadas hoy en otras entradas, para respetar el máximo diario.
   const usedElsewhere =
@@ -163,28 +169,32 @@ export default function Capture({ entry, initialText, onClose }: { entry?: Entry
           autoFocus={!entry}
         />
 
-        <div className="recorder">
-          <button
-            type="button"
-            className={`mic-big ${rec.recording ? 'recording' : ''}`}
-            onClick={toggleRecording}
-            disabled={busy || hasUnsavedPendingAudio}
-            aria-label={rec.recording ? 'Detener grabación' : 'Grabar nota de voz'}
-          >
-            <Icon name={rec.recording ? 'stop' : 'mic'} />
-          </button>
-          <p className="recorder-status">
-            {busy
-              ? 'Transcribiendo…'
-              : rec.recording
-                ? `Grabando · ${formatSeconds(rec.seconds)} · toca para terminar`
-                : hasUnsavedPendingAudio
-                  ? `Nota de voz lista (${formatSeconds(audio.seconds)}). Guarda para conservarla.`
-                  : audioState === 'done' && audio
-                    ? 'Transcrito. Revisa el texto o graba más.'
-                    : 'Toca para dictar'}
-          </p>
-        </div>
+        {voiceOn ? (
+          <div className="recorder">
+            <button
+              type="button"
+              className={`mic-big ${rec.recording ? 'recording' : ''}`}
+              onClick={toggleRecording}
+              disabled={busy || hasUnsavedPendingAudio}
+              aria-label={rec.recording ? 'Detener grabación' : 'Grabar nota de voz'}
+            >
+              <Icon name={rec.recording ? 'stop' : 'mic'} />
+            </button>
+            <p className="recorder-status">
+              {busy
+                ? 'Transcribiendo…'
+                : rec.recording
+                  ? `Grabando · ${formatSeconds(rec.seconds)} · toca para terminar`
+                  : hasUnsavedPendingAudio
+                    ? `Nota de voz lista (${formatSeconds(audio.seconds)}). Guarda para conservarla.`
+                    : audioState === 'done' && audio
+                      ? 'Transcrito. Revisa el texto o graba más.'
+                      : 'Toca para dictar'}
+            </p>
+          </div>
+        ) : (
+          <p className="hint">Para dictar, toca el micrófono del teclado.</p>
+        )}
         {entry?.audioId && !audio && <AudioPlayer id={entry.audioId} />}
         {message && <p className="hint">{message}</p>}
 
