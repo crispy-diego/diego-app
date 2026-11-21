@@ -35,6 +35,13 @@ export default function SettingsView() {
     setStatus(error ? 'No se pudo entrar. Revisa el correo y la contraseña.' : 'Sesión iniciada.');
   };
 
+  const signUp = async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+    setPassword('');
+    setStatus(error ? `No se pudo crear la cuenta: ${error.message}` : 'Cuenta creada. Abre el correo de confirmación que te llegó y luego entra aquí.');
+  };
+
   const saveTranscription = async () => {
     await saveSetting('transcribeKey', key.trim());
     await saveSetting('transcribeModel', model.trim() || 'gpt-4o-transcribe');
@@ -73,12 +80,15 @@ export default function SettingsView() {
               </div>
             ) : (
               <>
-                <p className="hint">Entra para ver tu agenda real.</p>
+                <p className="hint">Entra para ver tu agenda real. La primera vez, crea tu cuenta con una contraseña de 8 caracteres o más.</p>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo" autoComplete="username" autoCapitalize="off" />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" autoComplete="current-password" />
                 <div className="row">
                   <button className="btn primary" onClick={signIn} disabled={!email.trim() || !password}>
                     Entrar
+                  </button>
+                  <button className="btn" onClick={signUp} disabled={!email.trim() || password.length < 8}>
+                    Crear cuenta
                   </button>
                 </div>
               </>
