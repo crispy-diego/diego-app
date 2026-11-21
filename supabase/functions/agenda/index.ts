@@ -5,9 +5,7 @@
 // Solo responde a la cuenta cuyo correo coincide con ALLOWED_EMAIL.
 //
 // Secretos necesarios:  COMPOSIO_API_KEY, ALLOWED_EMAIL
-// (SUPABASE_URL y SUPABASE_ANON_KEY los pone Supabase automáticamente.)
-
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+// (SUPABASE_URL lo pone Supabase automáticamente.)
 
 const COMPOSIO = 'https://backend.composio.dev/api/v3.1';
 
@@ -33,12 +31,12 @@ Deno.serve(async (req) => {
 
   try {
     // 1. ¿Quién llama? Debe ser tu cuenta.
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
+    const who = await fetch(`${Deno.env.get('SUPABASE_URL')}/auth/v1/user`, {
+      headers: { Authorization: req.headers.get('Authorization') ?? '', apikey: req.headers.get('apikey') ?? '' },
     });
-    const { data: auth } = await supabase.auth.getUser();
+    const user = who.ok ? await who.json() : null;
     const allowed = (Deno.env.get('ALLOWED_EMAIL') ?? '').toLowerCase();
-    if (!auth.user?.email || !allowed || auth.user.email.toLowerCase() !== allowed) return json({ error: 'No autorizado' }, 401);
+    if (!user?.email || !allowed || user.email.toLowerCase() !== allowed) return json({ error: 'No autorizado' }, 401);
 
     // 2. ¿Qué día? "day" = YYYY-MM-DD, "offset" = diferencia horaria del teléfono, p. ej. "-06:00".
     const { day, offset } = await req.json();
