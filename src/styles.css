@@ -851,3 +851,8 @@ cite {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
 }
+
+.event-facts dd {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

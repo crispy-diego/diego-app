@@ -1,4 +1,4 @@
-import type { AgendaEvent } from '../lib/agenda';
+import { eventColor, eventTime, type AgendaEvent } from '../lib/agenda';
 import { useApp } from '../App';
 import { Icon } from '../components/ui';
 
@@ -17,7 +17,7 @@ export default function EventDetail({ event, onClose }: { event: AgendaEvent; on
 
       <div className="sheet-body">
         <div className="event-title">
-          <i style={{ background: event.color }} />
+          <i style={{ background: eventColor(event) }} />
           <h1>{event.title}</h1>
         </div>
 
@@ -25,7 +25,7 @@ export default function EventDetail({ event, onClose }: { event: AgendaEvent; on
           <div>
             <dt>Hora</dt>
             <dd>
-              {event.start} a {event.end}
+              {event.allDay ? 'Todo el día' : `${eventTime(event.start, false)} a ${eventTime(event.end, false)}`}
             </dd>
           </div>
           {event.place && (

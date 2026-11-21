@@ -4,6 +4,7 @@ import { db, saveSetting } from '../db';
 import { exportAll, importAll } from '../lib/backup';
 import { processPending } from '../lib/transcribe';
 import { useApp } from '../App';
+import { supabase } from '../lib/supabase';
 
 export default function SettingsView() {
   const { settings } = useApp();
@@ -13,12 +14,26 @@ export default function SettingsView() {
   const [status, setStatus] = useState('');
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
+  const [account, setAccount] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const pending = useLiveQuery(() => db.entries.where('transcription').anyOf('pending', 'error').count(), []) ?? 0;
 
   useEffect(() => {
     navigator.storage?.persisted?.().then(setPersisted).catch(() => {});
+    if (!supabase) return;
+    void supabase.auth.getSession().then(({ data }) => setAccount(data.session?.user.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => setAccount(session?.user.email ?? null));
+    return () => sub.subscription.unsubscribe();
   }, []);
+
+  const signIn = async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setPassword('');
+    setStatus(error ? 'No se pudo entrar. Revisa el correo y la contraseña.' : 'Sesión iniciada.');
+  };
 
   const saveTranscription = async () => {
     await saveSetting('transcribeKey', key.trim());
@@ -44,6 +59,33 @@ export default function SettingsView() {
       <header className="page-head">
         <h1>Ajustes</h1>
       </header>
+
+      {supabase && (
+        <>
+          <h2>Tu cuenta</h2>
+          <section className="card form">
+            {account ? (
+              <div className="row">
+                <span className="spacer">{account}</span>
+                <button className="btn" onClick={() => void supabase!.auth.signOut()}>
+                  Salir
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="hint">Entra para ver tu agenda real.</p>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo" autoComplete="username" autoCapitalize="off" />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" autoComplete="current-password" />
+                <div className="row">
+                  <button className="btn primary" onClick={signIn} disabled={!email.trim() || !password}>
+                    Entrar
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+        </>
+      )}
 
       <h2>Transcripción de voz</h2>
       <section className="card form">

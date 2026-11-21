@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { dayKey, formatLongDate, greeting, shiftDay } from '../lib/dates';
 import { useApp } from '../App';
 import EntryCard from '../components/EntryCard';
-import { agendaForToday } from '../lib/agenda';
+import { eventColor, eventTime, loadAgenda, type Agenda } from '../lib/agenda';
 import { sceneForDay, sceneMarkup } from '../scenes';
 
 function hash(s: string): number {
@@ -55,6 +56,15 @@ function ReflectCard({ onClick }: { onClick: () => void }) {
 export default function Today() {
   const { open, go } = useApp();
   const today = dayKey();
+  const [agenda, setAgenda] = useState<Agenda | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void loadAgenda(today).then((a) => alive && setAgenda(a));
+    return () => {
+      alive = false;
+    };
+  }, [today]);
 
   const data = useLiveQuery(async () => {
     const lookbacks = [
@@ -90,18 +100,22 @@ export default function Today() {
         <h1>{greeting()}, Diego</h1>
       </header>
 
-      <ul className="agenda">
-        {agendaForToday().map((e) => (
-          <li key={e.id}>
-            <button onClick={() => open({ type: 'event', event: e })}>
-              <i style={{ background: e.color }} />
-              <span>{e.title}</span>
-              <time>{e.start}</time>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <p className="example-tag">Agenda de ejemplo</p>
+      {agenda && agenda.events.length > 0 && (
+        <ul className="agenda">
+          {agenda.events.map((e) => (
+            <li key={e.id}>
+              <button onClick={() => open({ type: 'event', event: e })}>
+                <i style={{ background: eventColor(e) }} />
+                <span>{e.title}</span>
+                <time>{eventTime(e.start, e.allDay)}</time>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {agenda?.source === 'ejemplo' && <p className="example-tag">Agenda de ejemplo</p>}
+      {agenda?.source === 'guardada' && agenda.events.length > 0 && <p className="example-tag">Sin conexión: última agenda guardada</p>}
+      {agenda && agenda.source !== 'ejemplo' && agenda.events.length === 0 && <p className="example-tag">Sin eventos hoy</p>}
 
       {principle ? (
         <button className="principle-card" onClick={() => go('principios')}>
