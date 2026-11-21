@@ -1,0 +1,11 @@
+node_modules
+dist
+dev-dist
+*.local
+.env*
+
+# No son parte de la app
+.claude
+lexma-demo
+demo-hoy.jpg
+paisajes.jpg
