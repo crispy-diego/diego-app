@@ -16,8 +16,10 @@ export interface AgendaEvent {
 
 export interface Agenda {
   events: AgendaEvent[];
-  /** real = recién traída; guardada = última copia (sin conexión); ejemplo = aún no hay servidor o sesión. */
-  source: 'real' | 'guardada' | 'ejemplo';
+  /** real = recién traída; guardada = última copia (sin conexión); ejemplo = aún no hay servidor o sesión; error = falló y no hay copia. */
+  source: 'real' | 'guardada' | 'ejemplo' | 'error';
+  /** Qué falló, cuando source = error. */
+  detail?: string;
 }
 
 const COLORS = ['var(--green)', 'var(--accent)', 'var(--green-dark)', 'var(--green-light)'];
@@ -54,8 +56,19 @@ export async function loadAgenda(day: string): Promise<Agenda> {
     if (error || !Array.isArray(data?.events)) throw error ?? new Error('Respuesta inválida');
     await db.kv.put({ key: cacheKey, value: data.events });
     return { events: data.events, source: 'real' };
-  } catch {
+  } catch (e) {
     const cached = await db.kv.get(cacheKey);
-    return { events: (cached?.value as AgendaEvent[] | undefined) ?? [], source: 'guardada' };
+    if (cached) return { events: cached.value as AgendaEvent[], source: 'guardada' };
+    // Sin copia guardada: di qué falló en vez de aparentar un día vacío.
+    let detail = e instanceof Error ? e.message : 'Error desconocido';
+    const response = (e as { context?: Response } | null)?.context;
+    if (response && typeof response.text === 'function') {
+      try {
+        detail = JSON.parse(await response.text()).error ?? detail;
+      } catch {
+        /* la respuesta no era JSON */
+      }
+    }
+    return { events: [], source: 'error', detail };
   }
 }

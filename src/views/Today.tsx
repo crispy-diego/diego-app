@@ -115,7 +115,9 @@ export default function Today() {
       )}
       {agenda?.source === 'ejemplo' && <p className="example-tag">Agenda de ejemplo</p>}
       {agenda?.source === 'guardada' && agenda.events.length > 0 && <p className="example-tag">Sin conexión: última agenda guardada</p>}
-      {agenda && agenda.source !== 'ejemplo' && agenda.events.length === 0 && <p className="example-tag">Sin eventos hoy</p>}
+      {agenda?.source === 'real' && agenda.events.length === 0 && <p className="example-tag">Sin eventos hoy</p>}
+      {agenda?.source === 'guardada' && agenda.events.length === 0 && <p className="example-tag">Sin conexión</p>}
+      {agenda?.source === 'error' && <p className="example-tag">No se pudo cargar tu agenda: {agenda.detail}</p>}
 
       {principle ? (
         <button className="principle-card" onClick={() => go('principios')}>
