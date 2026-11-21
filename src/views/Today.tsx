@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { dayKey, formatLongDate, greeting, shiftDay } from '../lib/dates';
@@ -16,7 +16,7 @@ function hash(s: string): number {
 function Scene() {
   const scene = sceneForDay();
   // El SVG viene de nuestro propio archivo de paisajes, no de datos externos.
-  return <div className="scene" style={{ background: scene.sky }} dangerouslySetInnerHTML={{ __html: sceneMarkup(scene) }} />;
+  return <div className="scene" style={{ '--scene-sky': scene.sky } as CSSProperties} dangerouslySetInnerHTML={{ __html: sceneMarkup(scene) }} />;
 }
 
 function Leaf() {
@@ -60,9 +60,14 @@ export default function Today() {
 
   useEffect(() => {
     let alive = true;
-    void loadAgenda(today).then((a) => alive && setAgenda(a));
+    const load = () => void loadAgenda(today).then((a) => alive && setAgenda(a));
+    load();
+    // Al volver a la app (p. ej. después de agregar algo al calendario), trae la agenda otra vez.
+    const onVisible = () => document.visibilityState === 'visible' && load();
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       alive = false;
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [today]);
 

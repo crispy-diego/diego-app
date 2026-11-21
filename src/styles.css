@@ -147,7 +147,8 @@ textarea:focus {
   width: calc(100% + 36px);
   margin: calc(-1 * (env(safe-area-inset-top) + 20px)) -18px 0;
   padding-top: env(safe-area-inset-top);
-  background: var(--sky);
+  /* Cielo arriba y fondo de la página abajo: así no asoma una rayita de cielo bajo el dibujo. */
+  background: linear-gradient(var(--scene-sky, var(--sky)) 50%, var(--bg) 50%);
 }
 
 .scene svg {
