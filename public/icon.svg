@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#2a5630"/>
-  <text x="256" y="350" font-family="Georgia, serif" font-size="300" font-weight="700" text-anchor="middle" fill="#fff6df">D</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" fill="#2a5630"/>
+  <g fill="#fff6df">
+    <circle cx="24" cy="26" r="2"/>
+    <circle cx="96" cy="22" r="2.2"/>
+    <circle cx="100" cy="54" r="1.6"/>
+    <circle cx="18" cy="60" r="1.6"/>
+  </g>
+  <path d="M38 100L82 88M38 88L82 100" stroke="#8a5a34" stroke-width="9" stroke-linecap="round"/>
+  <path d="M60 24C74 44 84 54 84 68A24 24 0 0 1 36 68C36 58 42 52 46 44C50 50 52 52 54 52C52 42 54 32 60 24z" fill="#ff8a1f"/>
+  <path d="M60 56C68 64 72 70 72 76A12 12 0 0 1 48 76C48 68 54 64 60 56z" fill="#ffd27a"/>
 </svg>
